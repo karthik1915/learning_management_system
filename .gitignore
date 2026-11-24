@@ -1,0 +1,9 @@
+node_modules
+.turbo
+dist
+.output
+.vinxi
+.env
+.env.*
+!.env.example
+drizzle
