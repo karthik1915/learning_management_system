@@ -14,6 +14,12 @@ const Navigation = [
     icon: '',
   },
   {
+    id: '3',
+    href: '/app/courses',
+    name: 'Courses',
+    icon: '',
+  },
+  {
     id: '2',
     href: '/app/settings',
     name: 'Settings',

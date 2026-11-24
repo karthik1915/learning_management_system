@@ -10,6 +10,8 @@ export const PERMISSIONS = [
   "domains.read",
   "billing.read",
   "audit.read",
+  "courses.read",
+  "courses.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -24,4 +26,6 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly Permission[]> = {
 export const can =
   (permission: Permission) =>
   ({ permissions }: { permissions: string[] }) =>
-    permissions.includes(permission) ? undefined : status(403, { error: "FORBIDDEN", permission });
+    permissions.includes(permission)
+      ? undefined
+      : status(403, { error: "FORBIDDEN", permission });

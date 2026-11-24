@@ -15,6 +15,7 @@ import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticat
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
+import { Route as AuthenticatedAppCoursesIndexRouteImport } from './routes/_authenticated/app/courses/index'
 import { Route as AuthenticatedAppMembersIndexRouteImport } from './routes/_authenticated/app/members/index'
 import { Route as AuthenticatedAppSettingsIndexRouteImport } from './routes/_authenticated/app/settings/index'
 
@@ -47,6 +48,12 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAppRouteRoute,
 } as any)
+const AuthenticatedAppCoursesIndexRoute =
+  AuthenticatedAppCoursesIndexRouteImport.update({
+    id: '/courses/',
+    path: '/courses/',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 const AuthenticatedAppMembersIndexRoute =
   AuthenticatedAppMembersIndexRouteImport.update({
     id: '/members/',
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/courses/': typeof AuthenticatedAppCoursesIndexRoute
   '/app/members/': typeof AuthenticatedAppMembersIndexRoute
   '/app/settings/': typeof AuthenticatedAppSettingsIndexRoute
 }
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/courses': typeof AuthenticatedAppCoursesIndexRoute
   '/app/members': typeof AuthenticatedAppMembersIndexRoute
   '/app/settings': typeof AuthenticatedAppSettingsIndexRoute
 }
@@ -85,6 +94,7 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/courses/': typeof AuthenticatedAppCoursesIndexRoute
   '/_authenticated/app/members/': typeof AuthenticatedAppMembersIndexRoute
   '/_authenticated/app/settings/': typeof AuthenticatedAppSettingsIndexRoute
 }
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/app/'
+    | '/app/courses/'
     | '/app/members/'
     | '/app/settings/'
   fileRoutesByTo: FileRoutesByTo
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/app'
+    | '/app/courses'
     | '/app/members'
     | '/app/settings'
   id:
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/_authenticated/app/'
+    | '/_authenticated/app/courses/'
     | '/_authenticated/app/members/'
     | '/_authenticated/app/settings/'
   fileRoutesById: FileRoutesById
@@ -169,6 +182,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/courses/': {
+      id: '/_authenticated/app/courses/'
+      path: '/courses'
+      fullPath: '/app/courses/'
+      preLoaderRoute: typeof AuthenticatedAppCoursesIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/members/': {
       id: '/_authenticated/app/members/'
       path: '/members'
@@ -188,12 +208,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+  AuthenticatedAppCoursesIndexRoute: typeof AuthenticatedAppCoursesIndexRoute
   AuthenticatedAppMembersIndexRoute: typeof AuthenticatedAppMembersIndexRoute
   AuthenticatedAppSettingsIndexRoute: typeof AuthenticatedAppSettingsIndexRoute
 }
 
 const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+  AuthenticatedAppCoursesIndexRoute: AuthenticatedAppCoursesIndexRoute,
   AuthenticatedAppMembersIndexRoute: AuthenticatedAppMembersIndexRoute,
   AuthenticatedAppSettingsIndexRoute: AuthenticatedAppSettingsIndexRoute,
 }

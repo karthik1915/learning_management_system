@@ -8,17 +8,19 @@ import { auth } from "@/lib/auth";
 import { cors } from "@elysiajs/cors";
 import { openapiPlugin, TAGS } from "@/lib/openapi";
 import { auditRouter } from "@/modules/audit/audit.router";
-import { complianceRouter } from "@/modules/compliance/compliance.router";
+
 import { meRouter } from "@/modules/me/me.router";
-import { membersRouter } from "@/modules/members/members.router";
+import { coursesRouter } from "@/modules/courses/courses.router";
 import { tenantRouter } from "@/modules/tenant/tenant.router";
+import { membersRouter } from "@/modules/members/members.router";
+
 import { logger } from "@/observability/logger";
 import { observability } from "@/plugins/observability";
 
 const api = new Elysia({ prefix: "/api/v1" })
   .use(meRouter)
   .use(tenantRouter)
-  .use(complianceRouter)
+  .use(coursesRouter)
   .use(membersRouter)
   .use(auditRouter);
 
