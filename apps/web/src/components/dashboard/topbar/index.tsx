@@ -1,3 +1,5 @@
+import { Search } from './search'
+
 type TopbarProps = {}
 
 const Topbar = (props: TopbarProps) => {
@@ -5,7 +7,7 @@ const Topbar = (props: TopbarProps) => {
     <div className="flex items-center justify-between pt-4 px-4">
       <div></div>
       <div className="flex items-center justify-start gap-4">
-        <div>Search</div>
+        <Search />
         <div>UserMenu</div>
       </div>
     </div>

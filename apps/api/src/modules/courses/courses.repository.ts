@@ -72,8 +72,6 @@ export type CourseListFilter = {
 export class CoursesRepository {
   constructor(private tx: Tx) {}
 
-  // ───────── /me/courses ─────────
-
   /** Courses the member is enrolled in. Students only ever see PUBLISHED courses. */
   enrolledCourses(tenantId: string, membershipId: string) {
     return this.tx
@@ -208,7 +206,7 @@ export class CoursesRepository {
     };
   }
 
-  // ───────── /courses/:id ─────────
+  // ───────── /courses/:courseId ─────────
 
   async findById(tenantId: string, id: string) {
     const [row] = await this.tx
@@ -300,6 +298,56 @@ export class CoursesRepository {
         ),
       )
       .orderBy(asc(l.sortOrder), asc(l.createdAt), asc(l.id));
+  }
+
+  // ───────── /courses/:courseId/:lessonId ─────────
+
+  /** Single lesson within a course. Students pass publishedOnly so drafts never leak. */
+  async lessonById(
+    tenantId: string,
+    courseId: string,
+    lessonId: string,
+    publishedOnly: boolean,
+  ) {
+    const [row] = await this.tx
+      .select({
+        id: l.id,
+        courseId: l.courseId,
+        title: l.title,
+        description: l.description,
+        sortOrder: l.sortOrder,
+        status: l.status,
+        isPreview: l.isPreview,
+        estimatedMinutes: l.estimatedMinutes,
+        createdAt: l.createdAt,
+        updatedAt: l.updatedAt,
+      })
+      .from(l)
+      .where(
+        and(
+          eq(l.tenantId, tenantId),
+          eq(l.courseId, courseId),
+          eq(l.id, lessonId),
+          isNull(l.effectiveEndDate),
+          publishedOnly ? eq(l.status, "PUBLISHED") : undefined,
+        ),
+      );
+    return row ?? null;
+  }
+
+  /** Full block details (content, URLs, config, etc.) for a single lesson. */
+  lessonBlocks(tenantId: string, lessonId: string) {
+    return this.tx
+      .select()
+      .from(b)
+      .where(
+        and(
+          eq(b.tenantId, tenantId),
+          eq(b.lessonId, lessonId),
+          isNull(b.effectiveEndDate),
+        ),
+      )
+      .orderBy(asc(b.sortOrder), asc(b.createdAt), asc(b.id));
   }
 
   /** Block OUTLINE only: no markdown body and no resource URL, those come from the lesson endpoint. */

@@ -20,6 +20,12 @@ const Navigation = [
     icon: '',
   },
   {
+    id: '4',
+    href: '/execute',
+    name: 'Execute',
+    icon: '',
+  },
+  {
     id: '2',
     href: '/app/settings',
     name: 'Settings',

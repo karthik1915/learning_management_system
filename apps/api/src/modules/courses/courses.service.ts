@@ -12,6 +12,36 @@ const isAdmin = (v: Viewer) => v.permissions.includes("courses.manage_all");
 export class CoursesService {
   constructor(private repo: CoursesRepository) {}
 
+  private async resolveAccess(v: Viewer, courseId: string) {
+    const course = await this.repo.findById(v.tenantId, courseId);
+    if (!course) return null;
+
+    const [teaching, enrollment] = await Promise.all([
+      this.repo.instructorLink(v.tenantId, courseId, v.membershipId),
+      this.repo.activeEnrollment(v.tenantId, courseId, v.membershipId),
+    ]);
+
+    const manager = isAdmin(v) || !!teaching;
+    const student = !!enrollment && course.status === "PUBLISHED";
+    if (!manager && !student) return null;
+
+    return {
+      course,
+      teaching,
+      enrollment: enrollment ?? null,
+      manager,
+      viewer: {
+        role: isAdmin(v)
+          ? ("ADMIN" as const)
+          : teaching
+            ? ("INSTRUCTOR" as const)
+            : ("STUDENT" as const),
+        canEdit: isAdmin(v) || !!teaching?.canEdit,
+        enrollment: enrollment ?? null,
+      },
+    };
+  }
+
   /** /me/courses: strictly the caller's own courses, as a student and/or as an instructor. */
   async mine(v: Viewer) {
     const [enrolled, taught] = await Promise.all([
@@ -66,45 +96,40 @@ export class CoursesService {
   }
 
   /**
-   * /courses/:id. Returns null (-> 404) when the caller may not see the course, so existence is
-   * never leaked. Managers (admin, or instructor of the course) see drafts; students only see a
-   * PUBLISHED course they are enrolled in, with PUBLISHED lessons, and with locks applied.
+   * /courses/:courseId — Course metadata & viewer state.
+   * Returns null (-> 404) when the caller may not see the course, so existence is never leaked.
    */
-  async detail(v: Viewer, courseId: string) {
-    const course = await this.repo.findById(v.tenantId, courseId);
-    if (!course) return null;
+  async courseDetail(v: Viewer, courseId: string) {
+    const access = await this.resolveAccess(v, courseId);
+    if (!access) return null;
 
-    const [teaching, enrollment] = await Promise.all([
-      this.repo.instructorLink(v.tenantId, courseId, v.membershipId),
-      this.repo.activeEnrollment(v.tenantId, courseId, v.membershipId),
-    ]);
+    return {
+      course: access.course,
+      viewer: access.viewer,
+    };
+  }
 
-    const manager = isAdmin(v) || !!teaching;
-    const student = !!enrollment && course.status === "PUBLISHED";
-    if (!manager && !student) return null;
+  /** /courses/:courseId/lessons — Lightweight lesson metadata, lock state, and progress. */
+  async courseLessons(v: Viewer, courseId: string) {
+    const access = await this.resolveAccess(v, courseId);
+    if (!access) return null;
 
-    const lessons = await this.repo.lessons(v.tenantId, courseId, !manager);
-    const lessonIds = lessons.map((x) => x.id);
-    const [blocks, lessonProgress, blockProgress] = await Promise.all([
-      this.repo.blockOutlines(v.tenantId, lessonIds),
-      enrollment ? this.repo.lessonProgress(v.tenantId, enrollment.id) : [],
-      enrollment ? this.repo.blockProgress(v.tenantId, enrollment.id) : [],
-    ]);
+    const { course, enrollment, manager } = access;
+    const rows = await this.repo.lessons(v.tenantId, courseId, !manager);
 
-    const progressByLesson = new Map(
-      lessonProgress.map((p) => [p.lessonId, p]),
-    );
-    const statusByBlock = new Map(blockProgress.map((p) => [p.blockId, p]));
+    const progressList = enrollment
+      ? await this.repo.lessonProgress(v.tenantId, enrollment.id)
+      : [];
+    const progressByLesson = new Map(progressList.map((p) => [p.lessonId, p]));
 
-    // Sequential unlock applies to students only; managers always see everything open.
-    // Lesson N opens once lesson N-1 is COMPLETED; a locked lesson keeps everything after it locked.
     const enforceLocks = !manager && course.isSequentialUnlock;
     let previousCompleted = true;
 
-    const outline = lessons.map((lesson) => {
+    const lessons = rows.map((lesson) => {
       const progress = progressByLesson.get(lesson.id);
       const locked = enforceLocks && !lesson.isPreview && !previousCompleted;
       previousCompleted = progress?.status === "COMPLETED";
+
       return {
         ...lesson,
         locked,
@@ -114,28 +139,100 @@ export class CoursesService {
               progressPercent: progress?.progressPercent ?? 0,
               completedBlocks: progress?.completedBlocks ?? 0,
               requiredBlocks: progress?.requiredBlocks ?? 0,
+              timeSpentSeconds: progress?.timeSpentSeconds ?? 0,
               completedAt: progress?.completedAt ?? null,
             }
           : null,
-        blocks: blocks
-          .filter((x) => x.lessonId === lesson.id)
-          .map(({ lessonId: _lessonId, ...block }) => ({
-            ...block,
-            status: enrollment
-              ? (statusByBlock.get(block.id)?.status ?? "NOT_STARTED")
-              : null,
-          })),
       };
     });
 
+    return { lessons };
+  }
+
+  /**
+   * /courses/:courseId/:lessonId — Single lesson details, full blocks, lock state, and progress.
+   * Returns null (-> 404) when the course or lesson does not exist or is hidden from the viewer.
+   */
+  async lessonDetail(v: Viewer, courseId: string, lessonId: string) {
+    const access = await this.resolveAccess(v, courseId);
+    if (!access) return null;
+
+    const { course, enrollment, manager, viewer } = access;
+
+    const lesson = await this.repo.lessonById(
+      v.tenantId,
+      courseId,
+      lessonId,
+      !manager,
+    );
+    if (!lesson) return null;
+
+    // Sequential unlock applies to students only; managers always see everything open.
+    // Lesson N opens once lesson N-1 is COMPLETED; a locked lesson keeps everything after it locked.
+    const enforceLocks = !manager && course.isSequentialUnlock;
+    const lessonProgressList = enrollment
+      ? await this.repo.lessonProgress(v.tenantId, enrollment.id)
+      : [];
+    const progressByLesson = new Map(
+      lessonProgressList.map((p) => [p.lessonId, p]),
+    );
+
+    let locked = false;
+    if (enforceLocks) {
+      const orderedLessons = await this.repo.lessons(
+        v.tenantId,
+        courseId,
+        true,
+      );
+      let previousCompleted = true;
+      for (const item of orderedLessons) {
+        const itemLocked = !item.isPreview && !previousCompleted;
+        if (item.id === lesson.id) {
+          locked = itemLocked;
+          break;
+        }
+        previousCompleted =
+          progressByLesson.get(item.id)?.status === "COMPLETED";
+      }
+    }
+
+    const [blocks, blockProgressList] = await Promise.all([
+      this.repo.lessonBlocks(v.tenantId, lesson.id),
+      enrollment ? this.repo.blockProgress(v.tenantId, enrollment.id) : [],
+    ]);
+
+    const progress = progressByLesson.get(lesson.id);
+    const statusByBlock = new Map(blockProgressList.map((p) => [p.blockId, p]));
+
     return {
-      course,
-      viewer: {
-        role: isAdmin(v) ? "ADMIN" : teaching ? "INSTRUCTOR" : "STUDENT",
-        canEdit: isAdmin(v) || !!teaching?.canEdit,
-        enrollment: enrollment ?? null,
+      course: {
+        id: course.id,
+        title: course.title,
+        slug: course.slug,
+        status: course.status,
+        isSequentialUnlock: course.isSequentialUnlock,
       },
-      lessons: outline,
+      viewer,
+      lesson: {
+        ...lesson,
+        locked,
+        progress: enrollment
+          ? {
+              status: progress?.status ?? "NOT_STARTED",
+              progressPercent: progress?.progressPercent ?? 0,
+              completedBlocks: progress?.completedBlocks ?? 0,
+              requiredBlocks: progress?.requiredBlocks ?? 0,
+              timeSpentSeconds: progress?.timeSpentSeconds ?? 0,
+              completedAt: progress?.completedAt ?? null,
+            }
+          : null,
+        blocks: blocks.map(({ lessonId: _lessonId, ...block }) => ({
+          ...block,
+          status: enrollment
+            ? (statusByBlock.get(block.id)?.status ?? "NOT_STARTED")
+            : null,
+        })),
+      },
     };
   }
 }

@@ -18,8 +18,8 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = (props) => {
   return (
-    <div className={'grid grid-cols-[220px_1fr] h-[100dvh] overflow-hidden'}>
-      <aside className="bg-accent p-4">
+    <div className="grid grid-cols-[220px_1fr] h-[100dvh] overflow-hidden">
+      <aside className="bg-accent p-4 overflow-y-auto min-h-0">
         <Link to="/app" className="font-semibold text-xl">
           {props.tenant.name}
         </Link>
@@ -31,9 +31,8 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
           ))}
         </div>
       </aside>
-      <main>{props.children}</main>
+      <main className="overflow-y-auto min-h-0">{props.children}</main>
     </div>
   )
 }
-
 export default Sidebar

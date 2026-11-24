@@ -1,90 +1,13 @@
 import { queryOptions } from '@tanstack/react-query'
 import { clientFetch, type QueryParamValue } from '@/lib/api.client'
-
-export type CourseStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
-export type CourseSortBy =
-  'title' | 'status' | 'createdAt' | 'updatedAt' | 'publishedAt'
-export type SortOrder = 'asc' | 'desc'
+import type {
+  CourseDetailResponse,
+  CourseLessonDetailResponse,
+  CourseLessonsResponse,
+  CourseListResponse,
+} from '@lms/types/courses'
 
 export type CourseListParams = Record<string, string | undefined>
-
-export interface CourseInstructorSummary {
-  membershipId: string
-  displayName?: string | null
-  avatarUrl?: string | null
-  isPrimary: boolean
-  canEdit: boolean
-}
-
-export interface CourseListItem {
-  id: string
-  slug: string
-  title: string
-  summary: string | null
-  level: string | null
-  status: CourseStatus
-  isSequentialUnlock: boolean
-  estimatedMinutes: number | null
-  publishedAt: string | null
-  createdAt: string
-  updatedAt: string
-  lessonCount: number
-  enrolledCount: number
-  instructors: CourseInstructorSummary[]
-}
-
-export interface CourseListResponse {
-  items: CourseListItem[]
-  total: number
-  page: number
-  limit: number
-}
-
-export interface CourseLessonBlockOutline {
-  id: string
-  blockType: string
-  sortOrder: number
-  title: string | null
-  durationSeconds: number | null
-  isRequired: boolean
-}
-
-export interface CourseLessonOutline {
-  id: string
-  title: string
-  description: string | null
-  sortOrder: number
-  status: string
-  isPreview: boolean
-  estimatedMinutes: number | null
-  locked?: boolean
-  progress?: {
-    status: string
-    progressPercent: number
-    completedBlocks: number
-    requiredBlocks: number
-    timeSpentSeconds: number
-  } | null
-  blocks: CourseLessonBlockOutline[]
-}
-
-export interface CourseDetailResponse {
-  id: string
-  tenantId: string
-  slug: string
-  title: string
-  summary: string | null
-  description: string | null
-  level: string | null
-  status: CourseStatus
-  isSequentialUnlock: boolean
-  estimatedMinutes: number | null
-  publishedAt: string | null
-  createdAt: string
-  updatedAt: string
-  instructors: CourseInstructorSummary[]
-  lessons: CourseLessonOutline[]
-}
 
 const ALLOWED_KEYS = new Set([
   'q',
@@ -118,9 +41,16 @@ export const courseKeys = {
     [...courseKeys.lists(), toCourseQueryParams(params)] as const,
   details: () => [...courseKeys.all, 'detail'] as const,
   detail: (id: string) => [...courseKeys.details(), id] as const,
+  lessonLists: () => [...courseKeys.all, 'lessons'] as const,
+  lessons: (courseId: string) =>
+    [...courseKeys.lessonLists(), courseId] as const,
+  lessonSingle: () => [...courseKeys.all, 'lesson'] as const,
+  lesson: (courseId: string, lessonId: string) =>
+    [...courseKeys.lessonSingle(), courseId, lessonId] as const,
 }
 
 export const courseQueries = {
+  // List all the courses available
   list: (params: CourseListParams = {}) => {
     const query = toCourseQueryParams(params)
     return queryOptions({
@@ -132,10 +62,35 @@ export const courseQueries = {
     })
   },
 
+  // Get the full course details
   detail: (id: string) =>
     queryOptions({
       queryKey: courseKeys.detail(id),
       queryFn: () => clientFetch<CourseDetailResponse>(`/api/v1/courses/${id}`),
       enabled: Boolean(id),
+    }),
+
+  // Get available lessons for the course
+  lessons: (courseId: string) =>
+    queryOptions({
+      queryKey: courseKeys.lessons(courseId),
+      queryFn: () =>
+        clientFetch<CourseLessonsResponse>(
+          `/api/v1/courses/${courseId}/lessons`,
+        ),
+      enabled: Boolean(courseId),
+      staleTime: 30_000,
+    }),
+
+  // Get the course's lesson details
+  lesson: (courseId: string, lessonId: string) =>
+    queryOptions({
+      queryKey: courseKeys.lesson(courseId, lessonId),
+      queryFn: () =>
+        clientFetch<CourseLessonDetailResponse>(
+          `/api/v1/courses/${courseId}/${lessonId}`,
+        ),
+      enabled: Boolean(courseId) && Boolean(lessonId),
+      staleTime: 30_000,
     }),
 }

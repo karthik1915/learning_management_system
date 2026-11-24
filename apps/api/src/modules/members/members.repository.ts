@@ -14,7 +14,14 @@ const p = tTenantMemberProfile;
 const mr = tTenantMembershipRole;
 const r = tTenantRole;
 
-export type MemberFilter = { id?: string; q?: string; status?: string; role?: string; page?: number; limit?: number };
+export type MemberFilter = {
+  id?: string;
+  q?: string;
+  status?: string;
+  role?: string;
+  page?: number;
+  limit?: number;
+};
 
 export class MembersRepository {
   constructor(private tx: Tx) {}
@@ -32,19 +39,34 @@ export class MembersRepository {
       })
       .from(m)
       .leftJoin(p, eq(p.membershipId, m.id))
-      .where(and(eq(m.tenantId, tenantId), eq(m.userId, userId), eq(m.status, "ACTIVE"), isNull(m.effectiveEndDate)));
+      .where(
+        and(
+          eq(m.tenantId, tenantId),
+          eq(m.userId, userId),
+          eq(m.status, "ACTIVE"),
+          isNull(m.effectiveEndDate),
+        ),
+      );
     if (!member) return null;
 
     const roles = await this.tx
       .select({ code: r.code, name: r.name, permissions: r.permissions })
       .from(mr)
       .innerJoin(r, eq(r.id, mr.roleId))
-      .where(and(eq(mr.membershipId, member.id), isNull(mr.effectiveEndDate), isNull(r.effectiveEndDate)));
+      .where(
+        and(
+          eq(mr.membershipId, member.id),
+          isNull(mr.effectiveEndDate),
+          isNull(r.effectiveEndDate),
+        ),
+      );
 
     return {
       member,
       roles: roles.map(({ code, name }) => ({ code, name })),
-      permissions: [...new Set(roles.flatMap((x) => x.permissions as string[]))],
+      permissions: [
+        ...new Set(roles.flatMap((x) => x.permissions as string[])),
+      ],
     };
   }
 
@@ -62,7 +84,9 @@ export class MembersRepository {
         displayName: p.displayName,
         phone: p.phone,
         admissionNo: p.admissionNo,
-        roles: sql<string[]>`coalesce(array_agg(distinct ${r.code}) filter (where ${r.code} is not null), '{}')`,
+        roles: sql<
+          string[]
+        >`coalesce(array_agg(distinct ${r.code}) filter (where ${r.code} is not null), '{}')`,
       })
       .from(m)
       .innerJoin(user, eq(user.id, m.userId))
@@ -75,7 +99,12 @@ export class MembersRepository {
           isNull(m.effectiveEndDate),
           f.id ? eq(m.id, f.id) : undefined,
           f.status ? eq(m.status, f.status) : undefined,
-          f.q ? or(ilike(p.displayName, `%${f.q}%`), ilike(user.email, `%${f.q}%`)) : undefined,
+          f.q
+            ? or(
+                ilike(p.displayName, `%${f.q}%`),
+                ilike(user.email, `%${f.q}%`),
+              )
+            : undefined,
         ),
       )
       .groupBy(m.id, user.email, p.id)
@@ -84,7 +113,10 @@ export class MembersRepository {
       .limit(limit + 1)
       .offset((page - 1) * limit);
 
-    return { data: rows.slice(0, limit), meta: { page, limit, hasMore: rows.length > limit } };
+    return {
+      data: rows.slice(0, limit),
+      meta: { page, limit, hasMore: rows.length > limit },
+    };
   }
 
   async get(tenantId: string, id: string) {
@@ -93,7 +125,14 @@ export class MembersRepository {
 
   roles(tenantId: string) {
     return this.tx
-      .select({ id: r.id, code: r.code, name: r.name, description: r.description, isSystem: r.isSystem, permissions: r.permissions })
+      .select({
+        id: r.id,
+        code: r.code,
+        name: r.name,
+        description: r.description,
+        isSystem: r.isSystem,
+        permissions: r.permissions,
+      })
       .from(r)
       .where(and(eq(r.tenantId, tenantId), isNull(r.effectiveEndDate)))
       .orderBy(asc(r.code));
@@ -102,7 +141,14 @@ export class MembersRepository {
   invitations(tenantId: string) {
     const i = tTenantInvitation;
     return this.tx
-      .select({ id: i.id, email: i.email, roleId: i.roleId, status: i.status, expiresAt: i.expiresAt, createdAt: i.createdAt })
+      .select({
+        id: i.id,
+        email: i.email,
+        roleId: i.roleId,
+        status: i.status,
+        expiresAt: i.expiresAt,
+        createdAt: i.createdAt,
+      })
       .from(i)
       .where(eq(i.tenantId, tenantId))
       .orderBy(sql`${i.createdAt} desc`)

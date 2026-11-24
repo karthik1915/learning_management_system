@@ -12,12 +12,18 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedAppRouteRouteImport } from './routes/_authenticated/app/route'
+import { Route as AuthenticatedExecuteRouteRouteImport } from './routes/_authenticated/execute/route'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app/index'
 import { Route as AuthenticatedAppCoursesIndexRouteImport } from './routes/_authenticated/app/courses/index'
+import { Route as AuthenticatedAppCoursesCourseIdRouteRouteImport } from './routes/_authenticated/app/courses/$courseId/route'
 import { Route as AuthenticatedAppMembersIndexRouteImport } from './routes/_authenticated/app/members/index'
+import { Route as AuthenticatedAppMembersIdRouteImport } from './routes/_authenticated/app/members/$id'
 import { Route as AuthenticatedAppSettingsIndexRouteImport } from './routes/_authenticated/app/settings/index'
+import { Route as AuthenticatedAppCoursesCourseIdIndexRouteImport } from './routes/_authenticated/app/courses/$courseId/index'
+import { Route as AuthenticatedAppCoursesCourseIdLessonIdRouteImport } from './routes/_authenticated/app/courses/$courseId/$lessonId'
+import { Route as AuthenticatedAppCoursesCourseIdEditRouteImport } from './routes/_authenticated/app/courses/_.$courseId.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -33,6 +39,12 @@ const AuthenticatedAppRouteRoute = AuthenticatedAppRouteRouteImport.update({
   path: '/app',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedExecuteRouteRoute =
+  AuthenticatedExecuteRouteRouteImport.update({
+    id: '/execute',
+    path: '/execute',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/auth/login',
   path: '/auth/login',
@@ -54,10 +66,22 @@ const AuthenticatedAppCoursesIndexRoute =
     path: '/courses/',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
+const AuthenticatedAppCoursesCourseIdRouteRoute =
+  AuthenticatedAppCoursesCourseIdRouteRouteImport.update({
+    id: '/courses/$courseId',
+    path: '/courses/$courseId',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 const AuthenticatedAppMembersIndexRoute =
   AuthenticatedAppMembersIndexRouteImport.update({
     id: '/members/',
     path: '/members/',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
+const AuthenticatedAppMembersIdRoute =
+  AuthenticatedAppMembersIdRouteImport.update({
+    id: '/members/$id',
+    path: '/members/$id',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
 const AuthenticatedAppSettingsIndexRoute =
@@ -66,69 +90,121 @@ const AuthenticatedAppSettingsIndexRoute =
     path: '/settings/',
     getParentRoute: () => AuthenticatedAppRouteRoute,
   } as any)
+const AuthenticatedAppCoursesCourseIdIndexRoute =
+  AuthenticatedAppCoursesCourseIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppCoursesCourseIdRouteRoute,
+  } as any)
+const AuthenticatedAppCoursesCourseIdLessonIdRoute =
+  AuthenticatedAppCoursesCourseIdLessonIdRouteImport.update({
+    id: '/$lessonId',
+    path: '/$lessonId',
+    getParentRoute: () => AuthenticatedAppCoursesCourseIdRouteRoute,
+  } as any)
+const AuthenticatedAppCoursesCourseIdEditRoute =
+  AuthenticatedAppCoursesCourseIdEditRouteImport.update({
+    id: '/courses/_/$courseId/edit',
+    path: '/courses/$courseId/edit',
+    getParentRoute: () => AuthenticatedAppRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AuthenticatedAppRouteRouteWithChildren
+  '/execute': typeof AuthenticatedExecuteRouteRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/courses/$courseId': typeof AuthenticatedAppCoursesCourseIdRouteRouteWithChildren
+  '/app/members/$id': typeof AuthenticatedAppMembersIdRoute
   '/app/courses/': typeof AuthenticatedAppCoursesIndexRoute
   '/app/members/': typeof AuthenticatedAppMembersIndexRoute
   '/app/settings/': typeof AuthenticatedAppSettingsIndexRoute
+  '/app/courses/$courseId/$lessonId': typeof AuthenticatedAppCoursesCourseIdLessonIdRoute
+  '/app/courses/$courseId/': typeof AuthenticatedAppCoursesCourseIdIndexRoute
+  '/app/courses/$courseId/edit': typeof AuthenticatedAppCoursesCourseIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/execute': typeof AuthenticatedExecuteRouteRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/members/$id': typeof AuthenticatedAppMembersIdRoute
   '/app/courses': typeof AuthenticatedAppCoursesIndexRoute
   '/app/members': typeof AuthenticatedAppMembersIndexRoute
   '/app/settings': typeof AuthenticatedAppSettingsIndexRoute
+  '/app/courses/$courseId/$lessonId': typeof AuthenticatedAppCoursesCourseIdLessonIdRoute
+  '/app/courses/$courseId': typeof AuthenticatedAppCoursesCourseIdIndexRoute
+  '/app/courses/$courseId/edit': typeof AuthenticatedAppCoursesCourseIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteRouteWithChildren
+  '/_authenticated/execute': typeof AuthenticatedExecuteRouteRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/courses/$courseId': typeof AuthenticatedAppCoursesCourseIdRouteRouteWithChildren
+  '/_authenticated/app/members/$id': typeof AuthenticatedAppMembersIdRoute
   '/_authenticated/app/courses/': typeof AuthenticatedAppCoursesIndexRoute
   '/_authenticated/app/members/': typeof AuthenticatedAppMembersIndexRoute
   '/_authenticated/app/settings/': typeof AuthenticatedAppSettingsIndexRoute
+  '/_authenticated/app/courses/$courseId/$lessonId': typeof AuthenticatedAppCoursesCourseIdLessonIdRoute
+  '/_authenticated/app/courses/$courseId/': typeof AuthenticatedAppCoursesCourseIdIndexRoute
+  '/_authenticated/app/courses/_/$courseId/edit': typeof AuthenticatedAppCoursesCourseIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/app'
+    | '/execute'
     | '/auth/login'
     | '/auth/signup'
     | '/app/'
+    | '/app/courses/$courseId'
+    | '/app/members/$id'
     | '/app/courses/'
     | '/app/members/'
     | '/app/settings/'
+    | '/app/courses/$courseId/$lessonId'
+    | '/app/courses/$courseId/'
+    | '/app/courses/$courseId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/execute'
     | '/auth/login'
     | '/auth/signup'
     | '/app'
+    | '/app/members/$id'
     | '/app/courses'
     | '/app/members'
     | '/app/settings'
+    | '/app/courses/$courseId/$lessonId'
+    | '/app/courses/$courseId'
+    | '/app/courses/$courseId/edit'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_authenticated/app'
+    | '/_authenticated/execute'
     | '/auth/login'
     | '/auth/signup'
     | '/_authenticated/app/'
+    | '/_authenticated/app/courses/$courseId'
+    | '/_authenticated/app/members/$id'
     | '/_authenticated/app/courses/'
     | '/_authenticated/app/members/'
     | '/_authenticated/app/settings/'
+    | '/_authenticated/app/courses/$courseId/$lessonId'
+    | '/_authenticated/app/courses/$courseId/'
+    | '/_authenticated/app/courses/_/$courseId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -161,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRouteRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/execute': {
+      id: '/_authenticated/execute'
+      path: '/execute'
+      fullPath: '/execute'
+      preLoaderRoute: typeof AuthenticatedExecuteRouteRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/auth/login': {
       id: '/auth/login'
       path: '/auth/login'
@@ -189,11 +272,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCoursesIndexRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/courses/$courseId': {
+      id: '/_authenticated/app/courses/$courseId'
+      path: '/courses/$courseId'
+      fullPath: '/app/courses/$courseId'
+      preLoaderRoute: typeof AuthenticatedAppCoursesCourseIdRouteRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
     '/_authenticated/app/members/': {
       id: '/_authenticated/app/members/'
       path: '/members'
       fullPath: '/app/members/'
       preLoaderRoute: typeof AuthenticatedAppMembersIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
+    '/_authenticated/app/members/$id': {
+      id: '/_authenticated/app/members/$id'
+      path: '/members/$id'
+      fullPath: '/app/members/$id'
+      preLoaderRoute: typeof AuthenticatedAppMembersIdRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
     '/_authenticated/app/settings/': {
@@ -203,21 +300,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppSettingsIndexRouteImport
       parentRoute: typeof AuthenticatedAppRouteRoute
     }
+    '/_authenticated/app/courses/$courseId/': {
+      id: '/_authenticated/app/courses/$courseId/'
+      path: '/'
+      fullPath: '/app/courses/$courseId/'
+      preLoaderRoute: typeof AuthenticatedAppCoursesCourseIdIndexRouteImport
+      parentRoute: typeof AuthenticatedAppCoursesCourseIdRouteRoute
+    }
+    '/_authenticated/app/courses/$courseId/$lessonId': {
+      id: '/_authenticated/app/courses/$courseId/$lessonId'
+      path: '/$lessonId'
+      fullPath: '/app/courses/$courseId/$lessonId'
+      preLoaderRoute: typeof AuthenticatedAppCoursesCourseIdLessonIdRouteImport
+      parentRoute: typeof AuthenticatedAppCoursesCourseIdRouteRoute
+    }
+    '/_authenticated/app/courses/_/$courseId/edit': {
+      id: '/_authenticated/app/courses/_/$courseId/edit'
+      path: '/courses/$courseId/edit'
+      fullPath: '/app/courses/$courseId/edit'
+      preLoaderRoute: typeof AuthenticatedAppCoursesCourseIdEditRouteImport
+      parentRoute: typeof AuthenticatedAppRouteRoute
+    }
   }
 }
 
+interface AuthenticatedAppCoursesCourseIdRouteRouteChildren {
+  AuthenticatedAppCoursesCourseIdLessonIdRoute: typeof AuthenticatedAppCoursesCourseIdLessonIdRoute
+  AuthenticatedAppCoursesCourseIdIndexRoute: typeof AuthenticatedAppCoursesCourseIdIndexRoute
+}
+
+const AuthenticatedAppCoursesCourseIdRouteRouteChildren: AuthenticatedAppCoursesCourseIdRouteRouteChildren =
+  {
+    AuthenticatedAppCoursesCourseIdLessonIdRoute:
+      AuthenticatedAppCoursesCourseIdLessonIdRoute,
+    AuthenticatedAppCoursesCourseIdIndexRoute:
+      AuthenticatedAppCoursesCourseIdIndexRoute,
+  }
+
+const AuthenticatedAppCoursesCourseIdRouteRouteWithChildren =
+  AuthenticatedAppCoursesCourseIdRouteRoute._addFileChildren(
+    AuthenticatedAppCoursesCourseIdRouteRouteChildren,
+  )
+
 interface AuthenticatedAppRouteRouteChildren {
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+  AuthenticatedAppCoursesCourseIdRouteRoute: typeof AuthenticatedAppCoursesCourseIdRouteRouteWithChildren
+  AuthenticatedAppMembersIdRoute: typeof AuthenticatedAppMembersIdRoute
   AuthenticatedAppCoursesIndexRoute: typeof AuthenticatedAppCoursesIndexRoute
   AuthenticatedAppMembersIndexRoute: typeof AuthenticatedAppMembersIndexRoute
   AuthenticatedAppSettingsIndexRoute: typeof AuthenticatedAppSettingsIndexRoute
+  AuthenticatedAppCoursesCourseIdEditRoute: typeof AuthenticatedAppCoursesCourseIdEditRoute
 }
 
 const AuthenticatedAppRouteRouteChildren: AuthenticatedAppRouteRouteChildren = {
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+  AuthenticatedAppCoursesCourseIdRouteRoute:
+    AuthenticatedAppCoursesCourseIdRouteRouteWithChildren,
+  AuthenticatedAppMembersIdRoute: AuthenticatedAppMembersIdRoute,
   AuthenticatedAppCoursesIndexRoute: AuthenticatedAppCoursesIndexRoute,
   AuthenticatedAppMembersIndexRoute: AuthenticatedAppMembersIndexRoute,
   AuthenticatedAppSettingsIndexRoute: AuthenticatedAppSettingsIndexRoute,
+  AuthenticatedAppCoursesCourseIdEditRoute:
+    AuthenticatedAppCoursesCourseIdEditRoute,
 }
 
 const AuthenticatedAppRouteRouteWithChildren =
@@ -227,10 +371,12 @@ const AuthenticatedAppRouteRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAppRouteRoute: typeof AuthenticatedAppRouteRouteWithChildren
+  AuthenticatedExecuteRouteRoute: typeof AuthenticatedExecuteRouteRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppRouteRoute: AuthenticatedAppRouteRouteWithChildren,
+  AuthenticatedExecuteRouteRoute: AuthenticatedExecuteRouteRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

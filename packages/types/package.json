@@ -4,7 +4,9 @@
   "private": true,
   "exports": {
     ".": "./src/index.ts",
-    "./tenant": "./src/tenant.ts"
+    "./tenant": "./src/tenant.ts",
+    "./users": "./src/users.ts",
+    "./courses": "./src/courses.ts"
   },
   "devDependencies": {
     "typescript": "^5.7.0"
